@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   --background: 220 35% 4%;
   --foreground: 220 20% 97%;
@@ -15,7 +19,7 @@ body {
 }
 
 .heading-display {
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-sora);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;

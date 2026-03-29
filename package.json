@@ -8,19 +8,21 @@
     "start": "next start"
   },
   "dependencies": {
-    "@clerk/nextjs": "^6.39.1",
-    "next": "^14.2.24",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "@clerk/nextjs": "^7.0.0",
+    "next": "16.2.1",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
     "stripe": "^12.0.0"
+  },
+  "engines": {
+    "node": ">=20.9.0"
   },
   "devDependencies": {
     "tailwindcss": "^3.4.0",
     "autoprefixer": "^10.4.0",
     "postcss": "^8.4.0",
-    "typescript": "^5.0.0",
-    "@types/node": "^20.0.0",
-    "@types/react": "^18.0.0",
-    "@types/react-dom": "^18.0.0"
+    "typescript": "^5.6.0",
+    "@types/react": "^18.2.0",
+    "@types/node": "^20.0.0"
   }
 }
