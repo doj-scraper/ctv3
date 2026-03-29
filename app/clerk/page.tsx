@@ -1,4 +1,4 @@
-import { SignedIn, SignedOut, SignIn } from '@clerk/nextjs';
+import { SignIn, Signed, SignIn } from '@clerk/nextjs';
 
 export default function HomePage() {
   return (
