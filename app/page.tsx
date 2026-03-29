@@ -8,7 +8,7 @@ export default function HomePage() {
         <a href="/checkout" className="text-ct-accent underline">Go to Checkout</a>
       </SignedIn>
       <SignedOut>
-        <SignIn path="/sign-in" routing="path" signUpUrl="/sign-up" />
+        <SignIn />
       </SignedOut>
     </div>
   );
