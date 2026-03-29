@@ -15,7 +15,7 @@ body {
 }
 
 .heading-display {
-  font-family: 'Sora', sans-serif;
+  font-family: var(--font-sora);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
