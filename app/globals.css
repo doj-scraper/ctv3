@@ -1,0 +1,31 @@
+:root {
+  --background: 220 35% 4%;
+  --foreground: 220 20% 97%;
+  --card: 220 30% 8%;
+  --card-foreground: 220 20% 97%;
+  --accent: 168 100% 45%;
+  --accent-foreground: 220 35% 4%;
+  --radius: 0.625rem;
+}
+
+body {
+  font-family: var(--font-inter);
+  background-color: #070A12;
+  color: #F2F5FA;
+}
+
+.heading-display {
+  font-family: 'Sora', sans-serif;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  line-height: 0.95;
+}
+
+.text-micro {
+  font-family: 'IBM Plex Mono', monospace;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  font-size: 12px;
+  text-transform: uppercase;
+}
