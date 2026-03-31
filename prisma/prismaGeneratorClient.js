@@ -1,0 +1,267 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Brand {
+  id     String  @id @default(uuid())
+  code   String  @unique @db.VarChar(2)
+  name   String  @db.VarChar(50)
+  models Model[]
+  // ✅ Removed redundant @@index([code]) — @unique already creates an index
+}
+
+model Model {
+  id      String  @id @default(uuid())
+  code    String  @db.VarChar(4)
+  name    String  @db.VarChar(50)
+  brandId String
+  brand   Brand   @relation(fields: [brandId], references: [id])
+  phones  Phone[]
+
+  @@unique([brandId, code])
+}
+
+model Phone {
+  id              String   @id @default(uuid())
+  generation      String   @db.VarChar(4)
+  variantCode     String   @db.VarChar(4) // ✅ Non-nullable now. Base="ZZ", Pro="PR", Pro Max="PM" etc.
+  variantName     String?  @db.VarChar(20)
+  externalModelId String?  @db.VarChar(20)
+  modelId         String
+  model           Model    @relation(fields: [modelId], references: [id])
+  primaryParts    PartMaster[] @relation("PrimaryPhoneParts")
+  compatibilities PhoneCompatibility[]
+
+  @@unique([modelId, generation, variantCode]) // ✅ No more NULL ambiguity
+  @@index([modelId])
+  @@index([externalModelId])
+}
+
+model Bucket {
+  id        Int        @id @default(autoincrement())
+  name      String     @unique @db.VarChar(20) // ✅ Added @unique
+  partTypes PartType[]
+}
+
+model PartType {
+  id       String       @id @default(uuid())
+  code     String       @db.VarChar(2)
+  name     String       @db.VarChar(30)
+  bucketId Int
+  bucket   Bucket       @relation(fields: [bucketId], references: [id])generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Brand {
+  id     String  @id @default(uuid())
+  code   String  @unique @db.VarChar(2)
+  name   String  @db.VarChar(50)
+  models Model[]
+  // ✅ Removed redundant @@index([code]) — @unique already creates an index
+}
+
+model Model {
+  id      String  @id @default(uuid())
+  code    String  @db.VarChar(4)
+  name    String  @db.VarChar(50)
+  brandId String
+  brand   Brand   @relation(fields: [brandId], references: [id])
+  phones  Phone[]
+
+  @@unique([brandId, code])
+}
+
+model Phone {
+  id              String   @id @default(uuid())
+  generation      String   @db.VarChar(4)
+  variantCode     String   @db.VarChar(4) // ✅ Non-nullable now. Base="ZZ", Pro="PR", Pro Max="PM" etc.
+  variantName     String?  @db.VarChar(20)
+  externalModelId String?  @db.VarChar(20)
+  modelId         String
+  model           Model    @relation(fields: [modelId], references: [id])
+  primaryParts    PartMaster[] @relation("PrimaryPhoneParts")
+  compatibilities PhoneCompatibility[]
+
+  @@unique([modelId, generation, variantCode]) // ✅ No more NULL ambiguity
+  @@index([modelId])
+  @@index([externalModelId])
+}
+
+model Bucket {
+  id        Int        @id @default(autoincrement())
+  name      String     @unique @db.VarChar(20) // ✅ Added @unique
+  partTypes PartType[]
+}
+
+model PartType {
+  id       String       @id @default(uuid())
+  code     String       @db.VarChar(2)
+  name     String       @db.VarChar(30)
+  bucketId Int
+  bucket   Bucket       @relation(fields: [bucketId], references: [id])
+  parts    PartMaster[]
+
+  @@unique([bucketId, code]) // ✅ Unique within bucket to prevent SKU collisions
+  @@index([bucketId])
+}
+
+model PartQuality {
+  id    String       @id @default(uuid())
+  code  String       @unique @db.VarChar(2)
+  name  String       @db.VarChar(20)
+  parts PartMaster[]
+  // ✅ Removed redundant @@index([code]) — @unique already creates an index
+}
+
+model PartMaster {
+  id             String   @id @default(uuid())
+  sku            String   @unique @db.VarChar(20)
+  searchIndex    String   @db.Text
+  partTypeId     String
+  qualityId      String
+  primaryPhoneId String
+  supplier       String?  @db.VarChar(50)
+  cost           Decimal? @db.Decimal(10, 2)
+  price          Decimal? @db.Decimal(10, 2)
+  stock          Int      @default(0)
+  createdAt      DateTime @default(now()) @db.Timestamp(6)
+  updatedAt      DateTime @updatedAt @db.Timestamp(6)
+
+  partType        PartType    @relation(fields: [partTypeId], references: [id])
+  quality         PartQuality @relation(fields: [qualityId], references: [id])
+  primaryPhone    Phone       @relation("PrimaryPhoneParts", fields: [primaryPhoneId], references: [id])
+  compatibilities PhoneCompatibility[]
+  aliases         PartAlias[]
+  stockLedger     StockLedger[]
+
+  @@index([stock])
+  @@index([partTypeId, qualityId])
+  @@index([createdAt])
+}
+
+model PhoneCompatibility {
+  id      String     @id @default(uuid())
+  partId  String
+  phoneId String
+  part    PartMaster @relation(fields: [partId], references: [id], onDelete: Cascade)
+  phone   Phone      @relation(fields: [phoneId], references: [id], onDelete: Cascade)
+
+  @@unique([partId, phoneId])
+  @@index([phoneId])
+  @@index([partId])
+}
+
+model PartAlias {
+  id           String     @id @default(uuid())
+  partId       String
+  supplier     String     @db.VarChar(50)
+  supplierSku  String     @db.VarChar(50)
+  supplierName String?    @db.Text
+  part         PartMaster @relation(fields: [partId], references: [id], onDelete: Cascade)
+
+  @@unique([supplier, supplierSku], name: "supplier_supplierSku")
+  @@index([supplierSku])
+  @@index([partId])
+}
+
+model StockLedger {
+  id          String     @id @default(uuid())
+  partId      String
+  change      Int        @db.Integer
+  balance     Int        @db.Integer
+  reason      String     @db.VarChar(50)
+  reference   String?    @db.VarChar(100)
+  createdAt   DateTime   @default(now()) @db.Timestamp(6)
+  part        PartMaster @relation(fields: [partId], references: [id])
+
+  @@index([partId, createdAt])
+  @@index([partId]) // ✅ Standalone index for queries without date filter
+}
+  parts    PartMaster[]
+
+  @@unique([bucketId, code]) // ✅ Unique within bucket to prevent SKU collisions
+  @@index([bucketId])
+}
+
+model PartQuality {
+  id    String       @id @default(uuid())
+  code  String       @unique @db.VarChar(2)
+  name  String       @db.VarChar(20)
+  parts PartMaster[]
+  // ✅ Removed redundant @@index([code]) — @unique already creates an index
+}
+
+model PartMaster {
+  id             String   @id @default(uuid())
+  sku            String   @unique @db.VarChar(20)
+  searchIndex    String   @db.Text
+  partTypeId     String
+  qualityId      String
+  primaryPhoneId String
+  supplier       String?  @db.VarChar(50)
+  cost           Decimal? @db.Decimal(10, 2)
+  price          Decimal? @db.Decimal(10, 2)
+  stock          Int      @default(0)
+  createdAt      DateTime @default(now()) @db.Timestamp(6)
+  updatedAt      DateTime @updatedAt @db.Timestamp(6)
+
+  partType        PartType    @relation(fields: [partTypeId], references: [id])
+  quality         PartQuality @relation(fields: [qualityId], references: [id])
+  primaryPhone    Phone       @relation("PrimaryPhoneParts", fields: [primaryPhoneId], references: [id])
+  compatibilities PhoneCompatibility[]
+  aliases         PartAlias[]
+  stockLedger     StockLedger[]
+
+  @@index([stock])
+  @@index([partTypeId, qualityId])
+  @@index([createdAt])
+}
+
+model PhoneCompatibility {
+  id      String     @id @default(uuid())
+  partId  String
+  phoneId String
+  part    PartMaster @relation(fields: [partId], references: [id], onDelete: Cascade)
+  phone   Phone      @relation(fields: [phoneId], references: [id], onDelete: Cascade)
+
+  @@unique([partId, phoneId])
+  @@index([phoneId])
+  @@index([partId])
+}
+
+model PartAlias {
+  id           String     @id @default(uuid())
+  partId       String
+  supplier     String     @db.VarChar(50)
+  supplierSku  String     @db.VarChar(50)
+  supplierName String?    @db.Text
+  part         PartMaster @relation(fields: [partId], references: [id], onDelete: Cascade)
+
+  @@unique([supplier, supplierSku], name: "supplier_supplierSku")
+  @@index([supplierSku])
+  @@index([partId])
+}
+
+model StockLedger {
+  id          String     @id @default(uuid())
+  partId      String
+  change      Int        @db.Integer
+  balance     Int        @db.Integer
+  reason      String     @db.VarChar(50)
+  reference   String?    @db.VarChar(100)
+  createdAt   DateTime   @default(now()) @db.Timestamp(6)
+  part        PartMaster @relation(fields: [partId], references: [id])
+
+  @@index([partId, createdAt])
+  @@index([partId]) // ✅ Standalone index for queries without date filter
+}

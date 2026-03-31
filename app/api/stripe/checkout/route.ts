@@ -1,53 +1,124 @@
 import Stripe from 'stripe';
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
+import { prisma } from '@/lib/prisma';
 
-export async function POST(req: Request) {
-  const { userId } = await auth();
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? '');
 
-  if (!userId) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+function buildPartLabel(item: {
+  part: {
+    sku: string;
+    partType: { name: string };
+    primaryPhone: {
+      generation: string;
+      variantName: string | null;
+      model: {
+        name: string;
+        brand: { name: string };
+      };
+    };
+  };
+}) {
+  const deviceLabel = [
+    item.part.primaryPhone.model.brand.name,
+    item.part.primaryPhone.model.name,
+    item.part.primaryPhone.generation,
+    item.part.primaryPhone.variantName,
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  return `${item.part.partType.name} for ${deviceLabel}`;
+}
+
+export async function POST() {
+  try {
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return NextResponse.json({ error: 'Stripe is not configured' }, { status: 500 });
+    }
+
+    const { userId: clerkId } = await auth();
+    if (!clerkId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
+    const dbUser = await prisma.user.findUnique({
+      where: { clerkId },
+      include: {
+        cartItems: {
+          include: {
+            part: {
+              include: {
+                partType: true,
+                primaryPhone: {
+                  include: {
+                    model: {
+                      include: {
+                        brand: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!dbUser || dbUser.cartItems.length === 0) {
+      return NextResponse.json({ error: 'Cart is empty or user not found' }, { status: 400 });
+    }
+
+    const outOfStockItems = dbUser.cartItems.filter((item) => item.quantity > item.part.stock);
+    if (outOfStockItems.length > 0) {
+      return NextResponse.json(
+        {
+          error: 'Inventory changed. Some items in your cart exceed available stock.',
+          invalidItems: outOfStockItems.map((item) => item.part.sku),
+        },
+        { status: 409 }
+      );
+    }
+
+    const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = dbUser.cartItems.map((item) => {
+      const unitAmount = Math.round(Number(item.part.price ?? 0) * 100);
+
+      return {
+        price_data: {
+          currency: 'usd',
+          product_data: {
+            name: buildPartLabel(item),
+            metadata: {
+              sku: item.part.sku,
+            },
+          },
+          unit_amount: unitAmount,
+        },
+        quantity: item.quantity,
+      };
+    });
+
+    const session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      line_items: lineItems,
+      success_url: `${appUrl}/orders?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${appUrl}/catalog?checkout=cancel`,
+      ...(dbUser.stripeCustomerId
+        ? { customer: dbUser.stripeCustomerId }
+        : { customer_email: dbUser.email || undefined }),
+      client_reference_id: dbUser.id,
+      metadata: {
+        user_id: dbUser.id,
+        clerk_id: clerkId,
+      },
+    });
+
+    return NextResponse.json({ url: session.url });
+  } catch (error) {
+    console.error('Checkout error:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-
-  const secretKey = process.env.STRIPE_SECRET_KEY;
-  if (!secretKey) {
-    return NextResponse.json(
-      { error: 'Stripe configuration error: STRIPE_SECRET_KEY is not set.' },
-      { status: 500 },
-    );
-  }
-
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-  if (!appUrl) {
-    return NextResponse.json(
-      { error: 'Application base URL is not configured.' },
-      { status: 500 },
-    );
-  }
-
-  const body = await req.json();
-  const priceId = typeof body?.priceId === 'string' ? body.priceId : null;
-
-  if (!priceId) {
-    return NextResponse.json({ error: 'Invalid or missing priceId' }, { status: 400 });
-  }
-
-  const stripe = new Stripe(secretKey, { apiVersion: '2022-11-15' });
-
-  const session = await stripe.checkout.sessions.create({
-    payment_method_types: ['card'],
-    line_items: [{ price: priceId, quantity: 1 }],
-    mode: 'payment',
-    success_url: `${appUrl}/success`,
-    cancel_url: `${appUrl}/cancel`,
-  });
-
-  if (!session.url) {
-    return NextResponse.json(
-      { error: 'Stripe error: checkout session URL was not generated.' },
-      { status: 500 },
-    );
-  }
-
-  return NextResponse.json({ url: session.url });
 }
