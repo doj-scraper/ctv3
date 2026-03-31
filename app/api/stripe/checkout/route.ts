@@ -1,24 +1,31 @@
 import Stripe from 'stripe';
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
+import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY ?? '');
 
-function buildPartLabel(item: {
-  part: {
-    sku: string;
-    partType: { name: string };
-    primaryPhone: {
-      generation: string;
-      variantName: string | null;
-      model: {
-        name: string;
-        brand: { name: string };
+type CheckoutCartItem = Prisma.CartItemGetPayload<{
+  include: {
+    part: {
+      include: {
+        partType: true;
+        primaryPhone: {
+          include: {
+            model: {
+              include: {
+                brand: true;
+              };
+            };
+          };
+        };
       };
     };
   };
-}) {
+}>;
+
+function buildPartLabel(item: CheckoutCartItem) {
   const deviceLabel = [
     item.part.primaryPhone.model.brand.name,
     item.part.primaryPhone.model.name,
@@ -72,7 +79,9 @@ export async function POST() {
       return NextResponse.json({ error: 'Cart is empty or user not found' }, { status: 400 });
     }
 
-    const outOfStockItems = dbUser.cartItems.filter((item) => item.quantity > item.part.stock);
+    const outOfStockItems = dbUser.cartItems.filter(
+      (item: CheckoutCartItem) => item.quantity > item.part.stock
+    );
     if (outOfStockItems.length > 0) {
       return NextResponse.json(
         {
@@ -83,23 +92,25 @@ export async function POST() {
       );
     }
 
-    const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = dbUser.cartItems.map((item) => {
-      const unitAmount = Math.round(Number(item.part.price ?? 0) * 100);
+    const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = dbUser.cartItems.map(
+      (item: CheckoutCartItem) => {
+        const unitAmount = Math.round(Number(item.part.price ?? 0) * 100);
 
-      return {
-        price_data: {
-          currency: 'usd',
-          product_data: {
-            name: buildPartLabel(item),
-            metadata: {
-              sku: item.part.sku,
+        return {
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: buildPartLabel(item),
+              metadata: {
+                sku: item.part.sku,
+              },
             },
+            unit_amount: unitAmount,
           },
-          unit_amount: unitAmount,
-        },
-        quantity: item.quantity,
-      };
-    });
+          quantity: item.quantity,
+        };
+      }
+    );
 
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
