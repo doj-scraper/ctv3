@@ -32,7 +32,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Invalid or missing priceId' }, { status: 400 });
   }
 
-  const stripe = new Stripe(secretKey, { apiVersion: '2023-08-16' });
+  const stripe = new Stripe(secretKey, { apiVersion: '2022-11-15' });
 
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ['card'],
