@@ -1,28 +1,51 @@
 {
-  "name": "celltech-ecommerce",
-  "version": "1.0.0",
+  "name": "commerce-auth",
+  "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 5000 -H 0.0.0.0",
+    "dev": "next dev",
     "build": "next build",
-    "start": "next start -p 5000 -H 0.0.0.0"
+    "start": "next start",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "postinstall": "prisma generate",
+    "test:e2e": "playwright test"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
-    "@clerk/nextjs": "^7.0.0",
-    "next": "16.2.1",
-    "react": "18.2.0",
-    "react-dom": "18.2.0",
-    "stripe": "^12.0.0"
-  },
-  "engines": {
-    "node": ">=20.9.0"
+    "@clerk/nextjs": "^7.0.7",
+    "@neondatabase/serverless": "^0.10.4",
+    "@prisma/adapter-neon": "^6.2.1",
+    "@upstash/ratelimit": "^2.0.8",
+    "@upstash/redis": "^1.37.0",
+    "clsx": "^2.1.1",
+    "dotenv": "^16.4.7",
+    "lucide-react": "^0.474.0",
+    "next": "^16.2.1",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "stripe": "^17.7.0",
+    "svix": "^1.72.0",
+    "tailwind-merge": "^2.6.0",
+    "ws": "^8.18.0"
   },
   "devDependencies": {
-    "tailwindcss": "^3.4.0",
-    "autoprefixer": "^10.4.0",
-    "postcss": "^8.4.0",
-    "typescript": "^5.6.0",
-    "@types/react": "^18.2.0",
-    "@types/node": "^20.0.0"
+    "@prisma/adapter-pg": "^6.2.1",
+    "@prisma/client": "^6.2.1",
+    "@types/node": "^20.17.16",
+    "@types/pg": "^8.11.11",
+    "@types/react": "^19.0.8",
+    "@types/react-dom": "^19.0.3",
+    "@types/ws": "^8.5.14",
+    "autoprefixer": "^10.4.27",
+    "eslint": "^9.38.0",
+    "eslint-config-next": "^16.2.1",
+    "postcss": "^8.5.8",
+    "prisma": "^6.2.1",
+    "tailwindcss": "^3.4.19",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "@playwright/test": "^1.58.2"
   }
 }
