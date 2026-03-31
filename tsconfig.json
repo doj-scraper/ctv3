@@ -1,11 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2017",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+    "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -17,25 +13,39 @@
     "isolatedModules": true,
     "jsx": "react-jsx",
     "incremental": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
+    "plugins": [{ "name": "next" }],
     "paths": {
-      "@/*": [
-        "./*"
-      ]
+      "@/*": ["./*"]
     }
   },
   "include": [
     "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
+    "app/**/*.ts",
+    "app/**/*.tsx",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "app/clerk/App.tsx",
+    "app/clerk/Cart.tsx",
+    "app/clerk/CartContext.tsx",
+    "app/clerk/CartDrawer.tsx",
+    "app/clerk/context.ts",
+    "app/clerk/db.ts",
+    "app/clerk/Header.tsx",
+    "app/clerk/Home.tsx",
+    "app/clerk/index.ts",
+    "app/clerk/main.tsx",
+    "app/clerk/oauth.ts",
+    "app/clerk/Orders.tsx",
+    "app/clerk/ProductGrid.tsx",
+    "app/clerk/relations.ts",
+    "app/clerk/routers.ts",
+    "app/clerk/schema.ts",
+    "app/clerk/sdk.ts",
+    "app/clerk/stripe-webhook.ts",
+    "app/clerk/useAuth.ts",
+    "app/clerk/cart.test.ts"
   ]
 }

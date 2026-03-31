@@ -17,13 +17,7 @@ export async function POST(req: Request) {
     );
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-  if (!appUrl) {
-    return NextResponse.json(
-      { error: 'Application base URL is not configured.' },
-      { status: 500 },
-    );
-  }
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? new URL(req.url).origin;
 
   const body = await req.json();
   const priceId = typeof body?.priceId === 'string' ? body.priceId : null;
@@ -32,7 +26,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Invalid or missing priceId' }, { status: 400 });
   }
 
-  const stripe = new Stripe(secretKey, { apiVersion: '2023-08-16' });
+  const stripe = new Stripe(secretKey, { apiVersion: '2022-11-15' });
 
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ['card'],

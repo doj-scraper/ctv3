@@ -10,16 +10,19 @@
   --accent: 168 100% 45%;
   --accent-foreground: 220 35% 4%;
   --radius: 0.625rem;
+  --font-sans: "Inter", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Sora", "Arial Black", "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
 }
 
 body {
-  font-family: var(--font-inter);
+  font-family: var(--font-sans);
   background-color: #070A12;
   color: #F2F5FA;
 }
 
 .heading-display {
-  font-family: var(--font-sora);
+  font-family: var(--font-display);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -27,7 +30,7 @@ body {
 }
 
 .text-micro {
-  font-family: 'IBM Plex Mono', monospace;
+  font-family: var(--font-mono);
   font-weight: 500;
   letter-spacing: 0.12em;
   font-size: 12px;
