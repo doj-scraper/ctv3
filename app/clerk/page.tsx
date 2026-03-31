@@ -1,3 +1,5 @@
+'use client';
+
 import { SignIn, SignedIn, SignedOut } from '@clerk/nextjs';
 
 export default function HomePage() {
