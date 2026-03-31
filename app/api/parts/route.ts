@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { Prisma } from '@prisma/client';
 
 import { prisma } from '@/lib/prisma';
 
@@ -8,6 +9,60 @@ type FacetOption = {
   value: string;
   label: string;
   count: number;
+};
+
+type PartListRecord = Prisma.PartMasterGetPayload<{
+  include: {
+    quality: true;
+    partType: {
+      include: {
+        bucket: true;
+      };
+    };
+    primaryPhone: {
+      include: {
+        model: {
+          include: {
+            brand: true;
+          };
+        };
+      };
+    };
+    compatibilities: {
+      include: {
+        phone: {
+          include: {
+            model: {
+              include: {
+                brand: true;
+              };
+            };
+          };
+        };
+      };
+    };
+  };
+}>;
+
+type PartCompatibilityRecord = PartListRecord['compatibilities'][number];
+
+type FacetSourceRecord = {
+  quality: {
+    name: string;
+  };
+  partType: {
+    bucket: {
+      name: string;
+    };
+  };
+  primaryPhone: {
+    model: {
+      name: string;
+      brand: {
+        name: string;
+      };
+    };
+  };
 };
 
 function buildDeviceLabel(phone: {
@@ -109,7 +164,7 @@ export async function GET(request: NextRequest) {
   const where = whereClauses.length > 0 ? { AND: whereClauses } : {};
 
   try {
-    const [parts, facetSource] = await Promise.all([
+    const [parts, facetSource]: [PartListRecord[], FacetSourceRecord[]] = await Promise.all([
       prisma.partMaster.findMany({
         where,
         orderBy: [{ stock: 'desc' }, { updatedAt: 'desc' }],
@@ -215,7 +270,7 @@ export async function GET(request: NextRequest) {
       ),
     };
 
-    const payload = parts.map((part) => {
+    const payload = parts.map((part: PartListRecord) => {
       const primaryDeviceLabel = buildDeviceLabel(part.primaryPhone);
 
       return {
@@ -261,7 +316,7 @@ export async function GET(request: NextRequest) {
             },
           },
         },
-        compatibilities: part.compatibilities.map((compatibility) => ({
+        compatibilities: part.compatibilities.map((compatibility: PartCompatibilityRecord) => ({
           id: compatibility.id,
           phone: {
             id: compatibility.phone.id,
